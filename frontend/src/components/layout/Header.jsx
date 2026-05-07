@@ -16,6 +16,7 @@ const Header = () => {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/dashboard', label: 'Dashboard' },
+    { to: '/disasters', label: 'Disasters' },   // new
     { to: '/shelters', label: 'Shelters' },
     { to: '/reports', label: 'Reports' },
     { to: '/disaster-history', label: 'History' },
@@ -26,7 +27,6 @@ const Header = () => {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-white" />
@@ -34,7 +34,6 @@ const Header = () => {
             <span className="font-bold text-xl text-gray-900">DURJOG</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-4">
             {navLinks.map((link) => (
               <Link
@@ -47,7 +46,6 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* User Menu */}
           <div className="flex items-center space-x-3">
             {user ? (
               <>
@@ -75,7 +73,6 @@ const Header = () => {
                 Login
               </Link>
             )}
-            {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
@@ -85,7 +82,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden py-2 border-t border-gray-200">
             {navLinks.map((link) => (

@@ -1,0 +1,24 @@
+[
+  {
+    "stationId": "BRAH_BAH",
+    "name": "Brahmaputra - Bahadurabad",
+    "upazila": "Jamalpur Sadar",
+    "currentLevel": 7.2,
+    "dangerLevel": 7.0,
+    "trend": "rising",   
+    "upstreamRainfall": 85, 
+    "forecast24h": 7.6,
+    "forecast48h": 8.1
+  },
+  {
+    "stationId": "MEGH_BHA",
+    "name": "Meghna - Bhairab Bazar",
+    "upazila": "Bhairab",
+    "currentLevel": 4.8,
+    "dangerLevel": 5.0,
+    "trend": "stable",
+    "upstreamRainfall": 30,
+    "forecast24h": 4.9,
+    "forecast48h": 5.0
+  }
+]

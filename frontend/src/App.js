@@ -15,6 +15,7 @@ import Profile from './components/profile/Profile';
 import AlertHistory from './components/dashboard/AlertHistory';   // <-- import AlertHistory
 import AlertHistoryPage from './pages/AlertHistoryPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import DisasterModulesPage from './pages/DisasterModulesPage';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
             <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="alerts" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />   {/* new route */}
             <Route path="/alerts" element={<ProtectedRoute><AlertHistoryPage /></ProtectedRoute>} />
+            <Route path="/disasters" element={<ProtectedRoute><DisasterModulesPage /></ProtectedRoute>} />  
           </Route>
         </Routes>
       </Router>

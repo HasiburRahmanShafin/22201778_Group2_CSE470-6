@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
+const disasterRoutes = require('./src/routes/disasterRoutes');
 
 const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/authRoutes');
@@ -34,6 +35,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/disaster', disasterRoutes);
 
 // Static GeoJSON
 const path = require('path');
