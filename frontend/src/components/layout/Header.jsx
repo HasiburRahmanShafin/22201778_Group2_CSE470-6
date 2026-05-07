@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AlertTriangle, User, LogOut, Menu } from 'lucide-react';
+import { AlertTriangle, User, LogOut, Menu, FileText, Package, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 
 const Header = () => {
@@ -13,20 +13,34 @@ const Header = () => {
     navigate('/');
   };
 
-  const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/dashboard', label: 'Dashboard' },
-    { to: '/disasters', label: 'Disasters' },   // new
-    { to: '/shelters', label: 'Shelters' },
-    { to: '/reports', label: 'Reports' },
-    { to: '/disaster-history', label: 'History' },
-    { to: '/resource-demand', label: 'Resources' },
+  // Base nav links for all authenticated users
+  const baseNavLinks = [
+    { to: '/', label: 'Home', icon: null },
+    { to: '/dashboard', label: 'Dashboard', icon: null },
+    { to: '/disasters', label: 'Disasters', icon: null },
+    { to: '/shelters', label: 'Shelters', icon: null },
+    { to: '/submit-report', label: 'Submit Report', icon: <FileText className="w-4 h-4 inline mr-1" /> },
+    { to: '/reports', label: 'All Reports', icon: null },
+    { to: '/resource-demand', label: 'Resources', icon: <Package className="w-4 h-4 inline mr-1" /> },
+    { to: '/disaster-history', label: 'History', icon: null },
   ];
+
+  // Admin‑only links
+  const adminLinks = [
+    { to: '/admin/reports', label: 'Verify Reports', icon: <ClipboardList className="w-4 h-4 inline mr-1" /> },
+  ];
+
+  // Build final navLinks based on user role
+  let navLinks = [...baseNavLinks];
+  if (user?.role === 'admin') {
+    navLinks = [...navLinks, ...adminLinks];
+  }
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-white" />
@@ -34,6 +48,7 @@ const Header = () => {
             <span className="font-bold text-xl text-gray-900">DURJOG</span>
           </Link>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-4">
             {navLinks.map((link) => (
               <Link
@@ -41,11 +56,13 @@ const Header = () => {
                 to={link.to}
                 className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
+                {link.icon && link.icon}
                 {link.label}
               </Link>
             ))}
           </nav>
 
+          {/* User Menu */}
           <div className="flex items-center space-x-3">
             {user ? (
               <>
@@ -73,6 +90,7 @@ const Header = () => {
                 Login
               </Link>
             )}
+            {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
@@ -82,6 +100,7 @@ const Header = () => {
           </div>
         </div>
 
+        {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden py-2 border-t border-gray-200">
             {navLinks.map((link) => (
@@ -91,6 +110,7 @@ const Header = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 text-base text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
               >
+                {link.icon && link.icon}
                 {link.label}
               </Link>
             ))}

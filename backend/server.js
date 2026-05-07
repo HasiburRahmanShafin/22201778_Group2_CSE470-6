@@ -11,6 +11,8 @@ const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/authRoutes');
 const locationRoutes = require('./src/routes/locationRoutes');
 const alertRoutes = require('./src/routes/alertRoutes');
+const communityRoutes = require('./src/routes/communityRoutes');
+
 const { setIo } = require('./src/services/ioService');   // new
 const { runAlertEngine } = require('./src/services/alertService'); // new
 
@@ -36,6 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/disaster', disasterRoutes);
+app.use('/api/community', communityRoutes);
 
 // Static GeoJSON
 const path = require('path');

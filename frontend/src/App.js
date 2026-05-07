@@ -16,7 +16,10 @@ import AlertHistory from './components/dashboard/AlertHistory';   // <-- import 
 import AlertHistoryPage from './pages/AlertHistoryPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import DisasterModulesPage from './pages/DisasterModulesPage';
-
+import SubmitReport from './components/community/SubmitReport';
+import AdminReports from './components/admin/AdminReports';
+import ShelterFinder from './components/community/ShelterFinder';
+import ResourceBoard from './components/community/ResourceBoard';
 function App() {
   return (
     <AuthProvider>
@@ -37,6 +40,11 @@ function App() {
             <Route path="alerts" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />   {/* new route */}
             <Route path="/alerts" element={<ProtectedRoute><AlertHistoryPage /></ProtectedRoute>} />
             <Route path="/disasters" element={<ProtectedRoute><DisasterModulesPage /></ProtectedRoute>} />  
+            <Route path="/submit-report" element={<ProtectedRoute><SubmitReport /></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
+            <Route path="/shelters" element={<ProtectedRoute><ShelterFinder /></ProtectedRoute>} />
+            <Route path="/resources" element={<ProtectedRoute><ResourceBoard /></ProtectedRoute>} />
+          
           </Route>
         </Routes>
       </Router>
