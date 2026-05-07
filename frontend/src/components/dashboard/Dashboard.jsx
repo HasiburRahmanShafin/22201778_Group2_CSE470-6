@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Cloud, MapPin, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Cloud, MapPin, TrendingUp, FileCheck, Home, Package } from 'lucide-react';
 import API from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import RiskMap from '../map/RiskMap';
 import DisasterHistory from './DisasterHistory';
 import AlertFeed from './AlertFeed';
-// Import new Sprint 4 components
 import FloodMonitoring from './FloodMonitoring';
 import EarthquakeTracker from './EarthquakeTracker';
 import FloodForecast from './FloodForecast';
 import MultiDisasterTimeline from './MultiDisasterTimeline';
 
 const Dashboard = () => {
-  // Mock stats (can be replaced with real counts later)
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const stats = [
     { label: 'Active Alerts', value: '3', icon: AlertTriangle, color: 'text-red-600' },
     { label: 'High Risk Areas', value: '8', icon: MapPin, color: 'text-orange-600' },
@@ -22,7 +24,6 @@ const Dashboard = () => {
 
   const [topRiskDistricts, setTopRiskDistricts] = useState([]);
 
-  // Fetch top risky districts from backend
   useEffect(() => {
     const fetchRiskSummary = async () => {
       try {
@@ -30,7 +31,6 @@ const Dashboard = () => {
         if (res.data && res.data.length) {
           setTopRiskDistricts(res.data.slice(0, 4));
         } else {
-          // fallback mock data
           setTopRiskDistricts([
             { name: 'Dhaka', riskScore: 65 },
             { name: 'Sylhet', riskScore: 85 },
@@ -40,7 +40,6 @@ const Dashboard = () => {
         }
       } catch (err) {
         console.error('Failed to load risk summary', err);
-        // fallback
         setTopRiskDistricts([
           { name: 'Dhaka', riskScore: 65 },
           { name: 'Sylhet', riskScore: 85 },
@@ -54,7 +53,6 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Real-time disaster monitoring and early warning alerts</p>
@@ -73,13 +71,40 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* Admin Quick Actions (only visible to admin) */}
+      {isAdmin && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link to="/admin/reports" className="bg-indigo-50 rounded-lg p-4 border border-indigo-200 hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-indigo-700">
+              <FileCheck className="w-6 h-6" />
+              <span className="font-semibold">Verify Reports</span>
+            </div>
+            <p className="text-sm text-indigo-600 mt-1">Approve/reject citizen reports</p>
+          </Link>
+          <Link to="/admin/shelters" className="bg-green-50 rounded-lg p-4 border border-green-200 hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-green-700">
+              <Home className="w-6 h-6" />
+              <span className="font-semibold">Manage Shelters</span>
+            </div>
+            <p className="text-sm text-green-600 mt-1">Add or update shelter information</p>
+          </Link>
+          <Link to="/admin/resources" className="bg-orange-50 rounded-lg p-4 border border-orange-200 hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-orange-700">
+              <Package className="w-6 h-6" />
+              <span className="font-semibold">Post Resources</span>
+            </div>
+            <p className="text-sm text-orange-600 mt-1">Add urgent needs for shelters</p>
+          </Link>
+        </div>
+      )}
+
       {/* Risk Map Section */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-3">Risk Map (Districts)</h2>
         <RiskMap />
       </div>
 
-      {/* Alert Feed (real-time) */}
+      {/* Alert Feed */}
       <div className="mb-8">
         <AlertFeed />
         <div className="text-right mt-2">
@@ -87,9 +112,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Two Columns: Risk Summary + Disaster History */}
+      {/* Risk Summary + Disaster History */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">
-        {/* Left: Risk Summary */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Top Risk Districts</h2>
           <div className="space-y-3">
@@ -109,28 +133,14 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
-
-        {/* Right: Disaster History */}
         <DisasterHistory />
       </div>
 
-      {/* ========== SPRINT 4 – DISASTER MONITORING MODULES ========== */}
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Disaster Monitoring Modules</h2>
-
-        {/* Flood Monitoring Dashboard */}
-        <div className="mb-10">
-          <FloodMonitoring />
-        </div>
-
-        {/* Two columns: Earthquake Tracker + (Forecast & Timeline) */}
+      {/* Sprint 4 Modules (integrated directly) */}
+      <div className="mt-12 pt-8 border-t border-gray-200 space-y-10">
+        <FloodMonitoring />
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left: Earthquake Tracker (includes aftershocks) */}
-          <div>
-            <EarthquakeTracker />
-          </div>
-
-          {/* Right: Flood Forecast + Multi‑Disaster Timeline */}
+          <EarthquakeTracker />
           <div className="space-y-8">
             <FloodForecast />
             <MultiDisasterTimeline />
@@ -138,11 +148,11 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions (optional) */}
+      {/* Citizen Quick Actions (visible to all) */}
       <div className="mt-8 grid md:grid-cols-3 gap-4">
-        <button className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Find Nearest Shelter</button>
-        <button className="p-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Submit a Report</button>
-        <button className="p-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">View Flood Map</button>
+        <Link to="/shelters" className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center">Find Nearest Shelter</Link>
+        <Link to="/submit-report" className="p-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center">Submit a Report</Link>
+        <Link to="/disasters" className="p-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center">View Disaster Modules</Link>
       </div>
     </div>
   );
