@@ -1,0 +1,18 @@
+[
+  {
+    "stationId": "BRAH_BAH",
+    "name": "Brahmaputra - Bahadurabad",
+    "upazila": "Jamalpur Sadar",
+    "currentLevel": 7.9,
+    "dangerLevel": 7.0,
+    "lastUpdated": "2026-05-05T08:00:00Z"
+  },
+  {
+    "stationId": "MEGH_BHA",
+    "name": "Meghna - Bhairab Bazar",
+    "upazila": "Bhairab",
+    "currentLevel": 4.9,
+    "dangerLevel": 5.0,
+    "lastUpdated": "2026-05-05T08:00:00Z"
+  }
+]
