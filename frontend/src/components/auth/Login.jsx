@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, AlertTriangle } from 'lucide-react';
+import { Mail, Lock} from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -29,10 +29,12 @@ const Login = () => {
     <div className="min-h-[80vh] flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-4">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-              <AlertTriangle className="w-10 h-10 text-white" />
-            </div>
+          <div className="flex justify-center mb-4"> 
+             <img 
+    src="/dlogo2.png" 
+    alt="DURJOG Logo" 
+    className="h-40 w-auto" 
+  />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to access your dashboard</p>

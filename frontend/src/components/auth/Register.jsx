@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, User, Phone, MapPin, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, User, Phone, MapPin } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -39,9 +39,11 @@ const Register = () => {
       <div className="max-w-md w-full mx-4">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-              <AlertTriangle className="w-10 h-10 text-white" />
-            </div>
+             <img 
+    src="/dlogo2.png" 
+    alt="DURJOG Logo" 
+    className="h-40 w-auto" 
+  />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
           <p className="text-gray-600">Join DURJOG to stay informed and safe</p>
@@ -101,7 +103,7 @@ const Register = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number(Optional)</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -115,7 +117,7 @@ const Register = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Home Location</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Home Location(Optional)</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input

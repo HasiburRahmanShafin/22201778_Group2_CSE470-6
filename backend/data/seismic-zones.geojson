@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Dauki Fault", "type": "active" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[91.8, 25.1], [92.2, 25.0], [92.6, 24.8]]
+      }
+    }
+  ]
+}

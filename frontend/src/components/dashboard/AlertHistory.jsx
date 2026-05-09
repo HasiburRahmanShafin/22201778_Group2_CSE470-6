@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAlertHistory } from '../../services/alertService';
-import { Calendar, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const AlertHistory = () => {
   const [alerts, setAlerts] = useState([]);

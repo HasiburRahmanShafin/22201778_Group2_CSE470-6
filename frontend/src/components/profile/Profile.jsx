@@ -35,7 +35,6 @@ const Profile = () => {
   const [followSearchTerm, setFollowSearchTerm] = useState('');
   const [followSuggestions, setFollowSuggestions] = useState([]);
   const [showFollowDropdown, setShowFollowDropdown] = useState(false);
-  const [followSearching, setFollowSearching] = useState(false);
   const followTimeout = useRef();
   
   // Password
@@ -48,6 +47,7 @@ const Profile = () => {
   // Load user data
   useEffect(() => {
     if (user) {
+      console.log('User data loaded:', user); // debug
       setProfile({
         name: user.name || '',
         email: user.email || '',
@@ -61,11 +61,12 @@ const Profile = () => {
         smsNotifications: true,
       });
       setFollowedUpazilas(user.preferredUpazilas || []);
+      // Update search term from homeLocation
       setHomeSearchTerm(user.homeLocation || '');
     }
   }, [user]);
   
-  // ✅ FIXED: use the working /locations endpoint (with search parameter)
+  // Search function – unchanged but ensure it works
   const searchUpazilas = async (query) => {
     if (!query || query.length < 2) return [];
     try {
@@ -90,6 +91,7 @@ const Profile = () => {
     }
   };
   
+  // Debounced home search
   useEffect(() => {
     if (homeTimeout.current) clearTimeout(homeTimeout.current);
     if (homeSearchTerm.length >= 2) {
@@ -105,6 +107,7 @@ const Profile = () => {
     return () => clearTimeout(homeTimeout.current);
   }, [homeSearchTerm]);
   
+  // Debounced follow search
   useEffect(() => {
     if (followTimeout.current) clearTimeout(followTimeout.current);
     if (followSearchTerm.length >= 2) {
@@ -150,7 +153,15 @@ const Profile = () => {
         alertPreferences: alertPrefs,
         preferredUpazilas: followedUpazilas,
       });
+      setProfile(prev => ({
+      ...prev,
+      name: profile.name,
+      contact: profile.contact,
+      homeLocation: profile.homeLocation,
+    }));
+      setHomeSearchTerm(profile.homeLocation);
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      // Force a small delay to ensure backend has saved, then refetch will happen in updateProfile
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.msg || 'Failed to update profile.' });
     } finally {
@@ -211,7 +222,7 @@ const Profile = () => {
               <input type="email" value={profile.email} disabled className="w-full px-4 py-2 bg-gray-100 border rounded-lg cursor-not-allowed" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
               <input type="tel" value={profile.contact} onChange={e => setProfile({...profile, contact: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
             </div>
             
@@ -257,7 +268,7 @@ const Profile = () => {
         </form>
       </div>
       
-      {/* Followed Upazilas */}
+      {/* Followed Upazilas – unchanged */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
         <div className="flex items-center space-x-2 mb-6">
           <Bell className="w-5 h-5 text-gray-600" />
@@ -297,7 +308,7 @@ const Profile = () => {
         </div>
       </div>
       
-      {/* Alert Preferences (unchanged) */}
+      {/* Alert Preferences and Change Password sections unchanged – they are fine */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
         <div className="flex items-center space-x-2 mb-6"><Bell className="w-5 h-5 text-gray-600" /><h2 className="text-xl font-semibold">Alert Preferences</h2></div>
         <div className="space-y-4">
@@ -318,7 +329,6 @@ const Profile = () => {
         </div>
       </div>
       
-      {/* Change Password */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex items-center space-x-2 mb-6"><Lock className="w-5 h-5 text-gray-600" /><h2 className="text-xl font-semibold">Change Password</h2></div>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">

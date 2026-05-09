@@ -15,41 +15,64 @@ const Dashboard = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const stats = [
-    { label: 'Active Alerts', value: '3', icon: AlertTriangle, color: 'text-red-600' },
-    { label: 'High Risk Areas', value: '8', icon: MapPin, color: 'text-orange-600' },
-    { label: 'Open Shelters', value: '124', icon: Cloud, color: 'text-green-600' },
-    { label: 'Recent Reports', value: '47', icon: TrendingUp, color: 'text-blue-600' },
-  ];
-
+  const [stats, setStats] = useState({
+    activeAlerts: 0,
+    highRiskAreas: 0,
+    openShelters: 0,
+    recentReports: 0,
+  });
   const [topRiskDistricts, setTopRiskDistricts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchRiskSummary = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const res = await API.get('/locations/risk-summary');
-        if (res.data && res.data.length) {
-          setTopRiskDistricts(res.data.slice(0, 4));
-        } else {
-          setTopRiskDistricts([
-            { name: 'Dhaka', riskScore: 65 },
-            { name: 'Sylhet', riskScore: 85 },
-            { name: 'Chittagong', riskScore: 45 },
-            { name: 'Rajshahi', riskScore: 32 },
-          ]);
-        }
+        setLoading(true);
+        setError(null);
+
+        // Fetch active alerts count
+        const alertsRes = await API.get('/alerts/active');
+        const activeAlerts = alertsRes.data.length;
+
+        // Fetch high risk areas (districts with riskScore >= 70)
+        const locationsRes = await API.get('/locations?type=district');
+        const highRiskAreas = locationsRes.data.filter(loc => loc.riskScore >= 70).length;
+
+        // Fetch open shelters count
+        const sheltersRes = await API.get('/community/shelters');
+        const openShelters = sheltersRes.data.filter(s => s.status === 'open').length;
+
+        // Fetch recent reports count (last 7 days, any status)
+        const reportsRes = await API.get('/community/reports');
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentReports = reportsRes.data.filter(r => new Date(r.createdAt) >= sevenDaysAgo).length;
+
+        setStats({ activeAlerts, highRiskAreas, openShelters, recentReports });
+
+        // Fetch top risk districts (sorted, limit 4)
+        const riskSummaryRes = await API.get('/locations/risk-summary');
+        setTopRiskDistricts(riskSummaryRes.data.slice(0, 4));
       } catch (err) {
-        console.error('Failed to load risk summary', err);
-        setTopRiskDistricts([
-          { name: 'Dhaka', riskScore: 65 },
-          { name: 'Sylhet', riskScore: 85 },
-          { name: 'Chittagong', riskScore: 45 },
-          { name: 'Rajshahi', riskScore: 32 },
-        ]);
+        console.error('Failed to load dashboard data', err);
+        setError('Unable to load dashboard data. Please try again later.');
+      } finally {
+        setLoading(false);
       }
     };
-    fetchRiskSummary();
+    fetchDashboardData();
   }, []);
+
+  const statItems = [
+    { label: 'Active Alerts', value: stats.activeAlerts, icon: AlertTriangle, color: 'text-red-600' },
+    { label: 'High Risk Areas', value: stats.highRiskAreas, icon: MapPin, color: 'text-orange-600' },
+    { label: 'Open Shelters', value: stats.openShelters, icon: Cloud, color: 'text-green-600' },
+    { label: 'Recent Reports', value: stats.recentReports, icon: TrendingUp, color: 'text-blue-600' },
+  ];
+
+  if (loading) return <div className="text-center py-10">Loading dashboard...</div>;
+  if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -60,7 +83,7 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat) => (
+        {statItems.map((stat) => (
           <div key={stat.label} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">{stat.label}</span>
@@ -116,27 +139,31 @@ const Dashboard = () => {
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Top Risk Districts</h2>
-          <div className="space-y-3">
-            {topRiskDistricts.map((district) => (
-              <div key={district.name}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{district.name}</span>
-                  <span>{district.riskScore}/100</span>
+          {topRiskDistricts.length === 0 ? (
+            <p className="text-gray-500">No risk data available</p>
+          ) : (
+            <div className="space-y-3">
+              {topRiskDistricts.map((district) => (
+                <div key={district.name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>{district.name}</span>
+                    <span>{district.riskScore}/100</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${district.riskScore >= 70 ? 'bg-red-500' : district.riskScore >= 40 ? 'bg-orange-500' : 'bg-green-500'}`}
+                      style={{ width: `${district.riskScore}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${district.riskScore >= 70 ? 'bg-red-500' : district.riskScore >= 40 ? 'bg-orange-500' : 'bg-green-500'}`}
-                    style={{ width: `${district.riskScore}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
         <DisasterHistory />
       </div>
 
-      {/* Sprint 4 Modules (integrated directly) */}
+      {/* Sprint 4 Modules */}
       <div className="mt-12 pt-8 border-t border-gray-200 space-y-10">
         <FloodMonitoring />
         <div className="grid lg:grid-cols-2 gap-8">
@@ -148,7 +175,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Citizen Quick Actions (visible to all) */}
+      {/* Citizen Quick Actions */}
       <div className="mt-8 grid md:grid-cols-3 gap-4">
         <Link to="/shelters" className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center">Find Nearest Shelter</Link>
         <Link to="/submit-report" className="p-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center">Submit a Report</Link>

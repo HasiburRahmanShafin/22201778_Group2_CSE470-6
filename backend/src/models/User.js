@@ -8,6 +8,8 @@ const UserSchema = new mongoose.Schema({
   preferredUpazilas: [{ type: String }],
   role: { type: String, enum: ['citizen', 'admin'], default: 'citizen' },
   refreshToken: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   alertPreferences: {
     floodAlerts: { type: Boolean, default: true },
     earthquakeAlerts: { type: Boolean, default: true },

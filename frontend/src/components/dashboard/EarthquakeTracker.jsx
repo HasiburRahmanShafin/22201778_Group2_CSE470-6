@@ -3,13 +3,6 @@ import API from '../../services/api';
 import AftershockList from './AftershockList';
 import { Loader } from 'lucide-react';
 
-// Fallback mock data if backend fails
-const FALLBACK_EARTHQUAKES = [
-  { magnitude: 5.2, depth: 35, place: "45km NE of Cox's Bazar", time: new Date().toISOString(), source: 'usgs' },
-  { magnitude: 4.8, depth: 20, place: "30km S of Sylhet", time: new Date(Date.now() - 2*24*60*60*1000).toISOString(), source: 'usgs' },
-  { magnitude: 6.2, depth: 50, place: "Chittagong region", time: new Date(Date.now() - 30*24*60*60*1000).toISOString(), source: 'db', title: "Magnitude 6.2 Earthquake - Chittagong" }
-];
-
 const EarthquakeTracker = () => {
   const [earthquakes, setEarthquakes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,22 +14,17 @@ const EarthquakeTracker = () => {
           API.get('/disaster/earthquakes/recent'),
           API.get('/disaster/earthquakes/major')
         ]);
-        let usgs = (usgsRes.data || []).map(q => ({ ...q, source: 'usgs' }));
-        let major = (majorRes.data || []).map(q => ({
+        const usgs = (usgsRes.data || []).map(q => ({ ...q, source: 'usgs' }));
+        const major = (majorRes.data || []).map(q => ({
           ...q,
           source: 'db',
           magnitude: parseFloat(q.title?.match(/\d+(?:\.\d+)?/)?.[0] || 5)
         }));
-        let combined = [...usgs, ...major];
-        if (combined.length === 0) {
-          console.log('No data from backend – using fallback mock');
-          combined = FALLBACK_EARTHQUAKES;
-        }
-        combined.sort((a,b) => new Date(b.time || b.timestamp) - new Date(a.time || a.timestamp));
+        const combined = [...usgs, ...major].sort((a, b) => new Date(b.time || b.timestamp) - new Date(a.time || a.timestamp));
         setEarthquakes(combined);
       } catch (err) {
-        console.error('Error fetching earthquakes – using fallback mock', err);
-        setEarthquakes(FALLBACK_EARTHQUAKES);
+        console.error('Error fetching earthquakes', err);
+        setEarthquakes([]);
       } finally {
         setLoading(false);
       }

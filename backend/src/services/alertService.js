@@ -1,25 +1,28 @@
 const Alert = require('../models/Alert');
 const User = require('../models/User');
-const riverStations = require('../../data/riverStations.json');
+const RiverStation = require('../models/RiverStation');
 const { fetchRecentEarthquakes } = require('./usgsService');
 const { sendAlertEmail } = require('./emailService');
 const { getIo } = require('./ioService');
+const { updateAllRiskScores } = require('../controllers/locationController');
+const Location = require('../models/Location');
 
 function getFloodLevel(current, danger) {
   const diff = current - danger;
-  if (diff >= 1.0) return 'emergency';
-  if (diff >= 0.5) return 'warning';
+  if (diff >= 0.8) return 'emergency';
+  if (diff >= 0.3) return 'warning';
   return 'watch';
 }
 
 function getEarthquakeLevel(magnitude) {
-  if (magnitude >= 6.5) return 'emergency';
-  if (magnitude >= 5.5) return 'warning';
+  if (magnitude >= 4.5) return 'emergency';
+  if (magnitude >= 3.5) return 'warning';
   return 'watch';
 }
 
 async function evaluateFloodRules() {
-  for (const station of riverStations) {
+  const stations = await RiverStation.find();
+  for (const station of stations) {
     if (station.currentLevel > station.dangerLevel) {
       const level = getFloodLevel(station.currentLevel, station.dangerLevel);
       const existing = await Alert.findOne({ upazila: station.upazila, type: 'flood', active: true });
@@ -27,12 +30,12 @@ async function evaluateFloodRules() {
 
       const alert = new Alert({
         title: `Flood Alert in ${station.upazila}`,
-        description: `Water level at ${station.name} is ${station.currentLevel}m (danger: ${station.dangerLevel}m). ${level === 'emergency' ? 'Immediate evacuation may be required.' : 'Monitor local updates.'}`,
+        description: `Water level at ${station.name} is ${station.currentLevel}m (danger: ${station.dangerLevel}m).`,
         type: 'flood',
         level,
         upazila: station.upazila,
         trigger: `River level ${station.currentLevel}m > danger ${station.dangerLevel}m`,
-        expiry: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        expiry: new Date(Date.now() + 3*24 * 60 * 60 * 1000)
       });
       await alert.save();
       await notifyUsersForUpazila(alert);
@@ -40,27 +43,43 @@ async function evaluateFloodRules() {
   }
 }
 
+
+async function findNearestUpazila(lat, lng) {
+  const [result] = await Location.aggregate([
+    {
+      $geoNear: {
+        near: { type: 'Point', coordinates: [lng, lat] },
+        distanceField: 'distance',
+        spherical: true,
+        query: { type: 'upazila' }
+      }
+    },
+    { $limit: 1 }
+  ]);
+  return result;
+}
+
 async function evaluateEarthquakeRules() {
   const quakes = await fetchRecentEarthquakes();
   for (const quake of quakes) {
-    if (quake.magnitude >= 5.0) {
-      let targetUpazila = null;
-      if (quake.place.includes('Cox')) targetUpazila = "Cox's Bazar Sadar";
-      else if (quake.place.includes('Sylhet')) targetUpazila = "Sylhet Sadar";
-      else if (quake.place.includes('Chittagong')) targetUpazila = "Chittagong Sadar";
-      else targetUpazila = "Dhaka Sadar";
+    if (quake.magnitude >= 5.0) {   // threshold as required
+      const nearest = await findNearestUpazila(quake.epicenter.lat, quake.epicenter.lng);
+      if (!nearest) continue;
 
-      const existing = await Alert.findOne({ upazila: targetUpazila, type: 'earthquake', active: true });
+      const distanceKm = nearest.distance / 1000;
+      if (distanceKm > 150) continue;
+
+      const existing = await Alert.findOne({ upazila: nearest.name, type: 'earthquake', active: true });
       if (existing) continue;
 
       const level = getEarthquakeLevel(quake.magnitude);
       const alert = new Alert({
         title: `Earthquake Alert - M${quake.magnitude}`,
-        description: `A ${quake.magnitude} magnitude earthquake was detected near ${quake.place}. ${level === 'emergency' ? 'Take cover immediately.' : 'Stay cautious.'}`,
+        description: `A ${quake.magnitude} magnitude earthquake was detected ${distanceKm.toFixed(0)} km from ${nearest.name}. ${level === 'emergency' ? 'Take cover immediately.' : 'Stay cautious.'}`,
         type: 'earthquake',
         level,
-        upazila: targetUpazila,
-        trigger: `Magnitude ${quake.magnitude} within 150km of ${targetUpazila}`,
+        upazila: nearest.name,
+        trigger: `Magnitude ${quake.magnitude} within ${distanceKm.toFixed(0)} km of ${nearest.name}`,
         expiry: new Date(Date.now() + 12 * 60 * 60 * 1000)
       });
       await alert.save();
@@ -69,36 +88,84 @@ async function evaluateEarthquakeRules() {
   }
 }
 
+
 async function notifyUsersForUpazila(alert) {
-  const users = await User.find({ preferredUpazilas: alert.upazila });
-  if (users.length === 0) return;
-  const io = getIo();  // use top-level constant
-  for (const user of users) {
-    io.to(user._id.toString()).emit('newAlert', {
-      alert,
-      message: `New ${alert.level.toUpperCase()} alert: ${alert.title}`
-    });
+  try {
+    const users = await User.find({ preferredUpazilas: alert.upazila });
+    if (users.length === 0) return;
+
+    const io = getIo();
+    if (!io) {
+      console.error('⚠️ Socket.io not available – real‑time alerts disabled');
+    } else {
+      for (const user of users) {
+        // Emit WebSocket event to user's private room
+        io.to(user._id.toString()).emit('newAlert', {
+          alert,
+          message: `New ${alert.level.toUpperCase()} alert: ${alert.title}`
+        });
+        // Send email if user has enabled email notifications
+        if (user.alertPreferences?.emailNotifications) {
+          try {
+            await sendAlertEmail(user.email, alert);
+          } catch (emailErr) {
+            console.error(`Email failed for ${user.email}:`, emailErr.message);
+          }
+        }
+      }
+    }
+    console.log(`📢 Notified ${users.length} users for alert on ${alert.upazila}`);
+  } catch (err) {
+    console.error(`❌ Error notifying users for ${alert.upazila}:`, err);
+  }
+}
+
+async function sendExistingAlertsForUpazila(user, upazilaName) {
+  const activeAlerts = await Alert.find({ upazila: upazilaName, active: true });
+  if (activeAlerts.length === 0) return;
+
+  const io = getIo();
+  for (const alert of activeAlerts) {
+    // Send WebSocket
+    if (io) {
+      io.to(user._id.toString()).emit('newAlert', {
+        alert,
+        message: `New ${alert.level.toUpperCase()} alert: ${alert.title}`
+      });
+    }
+    // Send email if enabled
     if (user.alertPreferences?.emailNotifications) {
       await sendAlertEmail(user.email, alert);
     }
   }
-  console.log(`Notified ${users.length} users for alert on ${alert.upazila}`);
+  console.log(`Sent ${activeAlerts.length} existing alerts to user ${user.email} for upazila ${upazilaName}`);
 }
 
+
+
 async function deactivateExpiredAlerts() {
-  const result = await Alert.updateMany(
-    { expiry: { $lt: new Date() }, active: true },
-    { active: false }
-  );
-  if (result.modifiedCount) console.log(`Deactivated ${result.modifiedCount} alerts`);
+  try {
+    const now = new Date();
+    const result = await Alert.updateMany(
+      { expiry: { $lt: now }, active: true },
+      { $set: { active: false } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`⏰ Deactivated ${result.modifiedCount} expired alerts`);
+    }
+  } catch (err) {
+    console.error('❌ Error deactivating expired alerts:', err);
+  }
 }
+
 
 async function runAlertEngine() {
   console.log('🔄 Running alert engine...', new Date().toISOString());
+  await updateAllRiskScores();
   await evaluateFloodRules();
   await evaluateEarthquakeRules();
   await deactivateExpiredAlerts();
   console.log('✅ Alert engine finished');
 }
 
-module.exports = { runAlertEngine };
+module.exports = { runAlertEngine, sendExistingAlertsForUpazila, findNearestUpazila };

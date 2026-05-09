@@ -12,6 +12,7 @@ const authRoutes = require('./src/routes/authRoutes');
 const locationRoutes = require('./src/routes/locationRoutes');
 const alertRoutes = require('./src/routes/alertRoutes');
 const communityRoutes = require('./src/routes/communityRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 const { setIo } = require('./src/services/ioService');   // new
 const { runAlertEngine } = require('./src/services/alertService'); // new
@@ -39,6 +40,7 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/disaster', disasterRoutes);
 app.use('/api/community', communityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Static GeoJSON
 const path = require('path');
@@ -63,7 +65,7 @@ server.listen(PORT, () => {
   runAlertEngine();
   // Schedule every 15 minutes
   const cron = require('node-cron');
-  cron.schedule('*/15 * * * *', () => {
+  cron.schedule('*/1 * * * *', () => {
     runAlertEngine();
   });
 });

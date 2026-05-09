@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getActiveAlerts } from '../../services/alertService';
 import { getSocket } from '../../services/socket';
+import { useAuth } from '../../context/AuthContext';
 import { AlertTriangle, Droplets, TrendingUp, MapPin, Clock } from 'lucide-react';
 
 const AlertFeed = () => {
+  const { user } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('severity'); // severity, date
@@ -11,7 +13,13 @@ const AlertFeed = () => {
   const fetchAlerts = async () => {
     try {
       const res = await getActiveAlerts();
-      setAlerts(res.data);
+      // Filter alerts: only show those whose upazila is in user's preferredUpazilas
+      const followedUpazilas = user?.preferredUpazilas || [];
+      let filtered = res.data;
+      if (followedUpazilas.length > 0) {
+        filtered = res.data.filter(alert => followedUpazilas.includes(alert.upazila));
+      }
+      setAlerts(filtered);
     } catch (err) {
       console.error(err);
     } finally {
@@ -23,16 +31,14 @@ const AlertFeed = () => {
     fetchAlerts();
     const socket = getSocket();
     if (socket) {
-      socket.on('newAlert', () => {
-        fetchAlerts(); // refresh instantly
-      });
+      socket.on('newAlert', () => fetchAlerts()); // refresh instantly
     }
-    const interval = setInterval(fetchAlerts, 30000); // poll every 30s
+    const interval = setInterval(fetchAlerts, 30000);
     return () => {
       clearInterval(interval);
       if (socket) socket.off('newAlert');
     };
-  }, []);
+  }, [user]);
 
   const sortedAlerts = [...alerts];
   if (sortBy === 'severity') {

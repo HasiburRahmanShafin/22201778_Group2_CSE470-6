@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Sylhet Basin", "risk": "high" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[91.5, 24.5], [92.0, 24.5], [92.0, 25.0], [91.5, 25.0], [91.5, 24.5]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Jamalpur Floodplain", "risk": "high" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[89.5, 24.8], [90.0, 24.8], [90.0, 25.2], [89.5, 25.2], [89.5, 24.8]]]
+      }
+    }
+  ]
+}

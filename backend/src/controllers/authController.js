@@ -166,17 +166,34 @@ exports.getProfile = async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
+// In authController.js updateProfile
 exports.updateProfile = async (req, res) => {
   const { name, contact, homeLocation, preferredUpazilas, alertPreferences } = req.body;
   try {
     const user = await User.findById(req.user.id);
+    const oldUpazilas = user.preferredUpazilas || [];
+
     if (name) user.name = name;
     if (contact !== undefined) user.contact = contact;
     if (homeLocation !== undefined) user.homeLocation = homeLocation;
-    if (preferredUpazilas !== undefined) user.preferredUpazilas = preferredUpazilas; // allows empty array
+    let newUpazilas = preferredUpazilas;
+    if (preferredUpazilas !== undefined) {
+      user.preferredUpazilas = preferredUpazilas;
+      newUpazilas = preferredUpazilas;
+    }
     if (alertPreferences) user.alertPreferences = alertPreferences;
 
     await user.save();
+
+    // For each newly added upazila, send existing active alerts
+    const added = newUpazilas.filter(upa => !oldUpazilas.includes(upa));
+    if (added.length > 0) {
+      const { sendExistingAlertsForUpazila } = require('../services/alertService');
+      for (const upa of added) {
+        await sendExistingAlertsForUpazila(user, upa);
+      }
+    }
+
     res.json({ msg: 'Profile updated' });
   } catch (err) {
     console.error(err.message);

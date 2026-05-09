@@ -15,5 +15,5 @@ const locationSchema = new mongoose.Schema({
     coordinates: { type: [Number], default: null }   // allow null
   }
 }, { timestamps: true });
-
+locationSchema.index({ geometry: '2dsphere' });
 module.exports = mongoose.model('Location', locationSchema);

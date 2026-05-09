@@ -6,7 +6,7 @@ function setIo(io) {
 
 function getIo() {
   if (!ioInstance) {
-    console.warn('getIo() called before io was set');
+    console.warn('⚠️ getIo() called before io was set');
   }
   return ioInstance;
 }

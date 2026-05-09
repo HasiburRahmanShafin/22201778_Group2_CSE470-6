@@ -1,4 +1,5 @@
 const Location = require('../models/Location');
+const { updateAllRiskScores } = require('../services/riskScoreService'); // import
 
 // Get all locations (with optional filters)
 exports.getLocations = async (req, res) => {
@@ -45,18 +46,19 @@ exports.computeRisk = async (req, res) => {
 };
 
 // Update all risk scores (cron job)
-exports.updateAllRiskScores = async () => {
-  const locations = await Location.find();
-  for (let loc of locations) {
-    let risk = 0;
-    if (loc.seismicZone === 'high') risk += 40;
-    else if (loc.seismicZone === 'moderate') risk += 20;
-    if (loc.floodProne) risk += 30;
-    risk = Math.min(100, risk + Math.floor(Math.random() * 20));
-    loc.riskScore = risk;
-    await loc.save();
+exports.updateAllRiskScores = updateAllRiskScores;
+
+// Keep the old risk summary endpoint unchanged
+exports.getRiskSummary = async (req, res) => {
+  try {
+    const topRisky = await Location.find({ type: 'district' })
+      .sort({ riskScore: -1 })
+      .limit(5)
+      .select('name riskScore');
+    res.json(topRisky);
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
   }
-  console.log('All risk scores updated');
 };
 
 // Get risk summary (top risky districts)
